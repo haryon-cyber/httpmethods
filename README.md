@@ -9,9 +9,9 @@ With this script, you can test various HTTP methods against an URL. This can be 
 Clone the repository and install the dependencies :
 
 ```sh
-git clone https://github.com/ShutdownRepo/httpmethods
-cd httpmethods
-python3 setup.py install
+git clone https://github.com/haryon-cyber/httpmethods.git /opt/
+cd /opt/httpmethods
+pip install -e .
 ```
 
 ## Usage
