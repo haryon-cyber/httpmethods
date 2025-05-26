@@ -14,42 +14,82 @@ from http.cookies import SimpleCookie
 banner = "[~] HTTP Methods Tester, v1.1.3\n"
 
 methods = [
-    'CHECKIN', 'CHECKOUT', 'CONNECT', 'COPY', 'DELETE', 'GET', 'HEAD', 'INDEX',
-    'LINK', 'LOCK', 'MKCOL', 'MOVE', 'NOEXISTE', 'OPTIONS', 'ORDERPATCH',
-    'PATCH', 'POST', 'PROPFIND', 'PROPPATCH', 'PUT', 'REPORT', 'SEARCH',
-    'SHOWMETHOD', 'SPACEJUMP', 'TEXTSEARCH', 'TRACE', 'TRACK', 'UNCHECKOUT',
-    'UNLINK', 'UNLOCK', 'VERSION-CONTROL', 'BAMBOOZLE'
+    "CHECKIN",
+    "CHECKOUT",
+    "CONNECT",
+    "COPY",
+    "DELETE",
+    "GET",
+    "HEAD",
+    "INDEX",
+    "LINK",
+    "LOCK",
+    "MKCOL",
+    "MOVE",
+    "NOEXISTE",
+    "OPTIONS",
+    "ORDERPATCH",
+    "PATCH",
+    "POST",
+    "PROPFIND",
+    "PROPPATCH",
+    "PUT",
+    "REPORT",
+    "SEARCH",
+    "SHOWMETHOD",
+    "SPACEJUMP",
+    "TEXTSEARCH",
+    "TRACE",
+    "TRACK",
+    "UNCHECKOUT",
+    "UNLINK",
+    "UNLOCK",
+    "VERSION-CONTROL",
+    "BAMBOOZLE",
 ]
 
 
 class Logger(object):
-    def __init__(self, verbosity=0, quiet=False):
+    def __init__(self, console, verbosity=0, quiet=False):
+        self.console = console
         self.verbosity = verbosity
         self.quiet = quiet
 
     def debug(self, message):
         if self.verbosity == 2:
-            console.print("{}[DEBUG]{} {}".format("[yellow3]", "[/yellow3]", message), highlight=False)
+            self.console.print(
+                "[yellow3][DEBUG][/yellow3] {}".format(message), highlight=False
+            )
 
     def verbose(self, message):
         if self.verbosity >= 1:
-            console.print("{}[VERBOSE]{} {}".format("[blue]", "[/blue]", message), highlight=False)
+            self.console.print(
+                "[blue][VERBOSE][/blue] {}".format(message), highlight=False
+            )
 
     def info(self, message):
         if not self.quiet:
-            console.print("{}[*]{} {}".format("[bold blue]", "[/bold blue]", message), highlight=False)
+            self.console.print(
+                "[bold blue][*][/bold blue] {}".format(message), highlight=False
+            )
 
     def success(self, message):
         if not self.quiet:
-            console.print("{}[+]{} {}".format("[bold green]", "[/bold green]", message), highlight=False)
+            self.console.print(
+                "[bold green][+][/bold green] {}".format(message), highlight=False
+            )
 
     def warning(self, message):
         if not self.quiet:
-            console.print("{}[-]{} {}".format("[bold orange3]", "[/bold orange3]", message), highlight=False)
+            self.console.print(
+                "[bold orange3][-][/bold orange3] {}".format(message), highlight=False
+            )
 
     def error(self, message):
         if not self.quiet:
-            console.print("{}[!]{} {}".format("[bold red]", "[/bold red]", message), highlight=False)
+            self.console.print(
+                "[bold red][!][/bold red] {}".format(message), highlight=False
+            )
 
 
 def get_options():
@@ -60,10 +100,7 @@ def get_options():
         formatter_class=argparse.RawTextHelpFormatter,
     )
 
-    parser.add_argument(
-        "url",
-        help="e.g. https://example.com:port/path"
-    )
+    parser.add_argument("url", help="e.g. https://example.com:port/path")
     parser.add_argument(
         "-v",
         "--verbose",
@@ -99,12 +136,12 @@ def get_options():
         help="Follow redirects (default: False)",
     )
     parser.add_argument(
-        '-s',
-        '--safe',
+        "-s",
+        "--safe",
         action="store_true",
         default=None,
-        dest='safe',
-        help="Use only safe methods for requests (default: False)"
+        dest="safe",
+        help="Use only safe methods for requests (default: False)",
     )
     parser.add_argument(
         "-w",
@@ -134,34 +171,35 @@ def get_options():
         help="Save results to specified JSON file.",
     )
     parser.add_argument(
-        '-x',
-        '--proxy',
+        "-x",
+        "--proxy",
         action="store",
         default=None,
-        dest='proxy',
-        help="Specify a proxy to use for requests (e.g., http://localhost:8080)"
+        dest="proxy",
+        help="Specify a proxy to use for requests (e.g., http://localhost:8080)",
     )
     parser.add_argument(
-        '-b', '--cookies',
+        "-b",
+        "--cookies",
         action="store",
         default=None,
-        dest='cookies',
-        help='Specify cookies to use in requests. (e.g., --cookies "cookie1=blah;cookie2=blah")'
+        dest="cookies",
+        help='Specify cookies to use in requests. (e.g., --cookies "cookie1=blah;cookie2=blah")',
     )
     parser.add_argument(
-        '-H',
-        '--header',
+        "-H",
+        "--header",
         default=[],
-        dest='headers',
-        action='append',
+        dest="headers",
+        action="append",
         required=False,
-        help='Specify headers to use in requests. (e.g., --header "Header1: Value1" --header "Header2: Value2")'
+        help='Specify headers to use in requests. (e.g., --header "Header1: Value1" --header "Header2: Value2")',
     )
     options = parser.parse_args()
     return options
 
 
-def methods_from_wordlist(wordlist):
+def methods_from_wordlist(logger, wordlist):
     logger.verbose(f"Retrieving methods from wordlist {wordlist}")
     try:
         with open(options.wordlist, "r") as infile:
@@ -170,7 +208,7 @@ def methods_from_wordlist(wordlist):
         logger.error(f"Had some kind of error loading the wordlist ¯\_(ツ)_/¯: {e}")
 
 
-def methods_from_http_options(console, options, proxies, headers, cookies):
+def methods_from_http_options(logger, console, options, proxies, headers, cookies):
     options_methods = []
     logger.verbose("Pulling available methods from server with an OPTIONS request")
     try:
@@ -179,7 +217,7 @@ def methods_from_http_options(console, options, proxies, headers, cookies):
             proxies=proxies,
             cookies=cookies,
             headers=headers,
-            verify=options.verify
+            verify=options.verify,
         )
     except requests.exceptions.ProxyError:
         logger.error("Invalid proxy specified ")
@@ -188,18 +226,25 @@ def methods_from_http_options(console, options, proxies, headers, cookies):
         logger.verbose("URL accepts OPTIONS")
         logger.debug(r.headers)
         if "Allow" in r.headers:
-            logger.info("URL answers with a list of options: {}".format(r.headers["Allow"]))
+            logger.info(
+                "URL answers with a list of options: {}".format(r.headers["Allow"])
+            )
             include_options_methods = console.input(
-                "[bold orange3][?][/bold orange3] Do you want to add these methods to the test (be careful, some methods can be dangerous)? [Y/n] ")
+                "[bold orange3][?][/bold orange3] Do you want to add these methods to the test (be careful, some methods can be dangerous)? [Y/n] "
+            )
             if not include_options_methods.lower() == "n":
                 for method in r.headers["Allow"].replace(" ", "").split(","):
                     if method not in options_methods:
                         logger.debug(f"Adding new method {method} to methods")
                         options_methods.append(method)
                     else:
-                        logger.debug(f"Method {method} already in known methods, passing")
+                        logger.debug(
+                            f"Method {method} already in known methods, passing"
+                        )
             else:
-                logger.debug("Methods found with OPTIONS won't be added to the tested methods")
+                logger.debug(
+                    "Methods found with OPTIONS won't be added to the tested methods"
+                )
         else:
             logger.verbose("URL doesn't answer with a list of options")
     else:
@@ -207,7 +252,7 @@ def methods_from_http_options(console, options, proxies, headers, cookies):
     return options_methods
 
 
-def test_method(options, method, proxies, cookies, headers, results):
+def test_method(logger, options, method, proxies, cookies, headers, results):
     try:
         r = requests.request(
             method=method,
@@ -222,13 +267,21 @@ def test_method(options, method, proxies, cookies, headers, results):
     except requests.exceptions.ProxyError:
         logger.error("Invalid proxy specified ")
         raise SystemExit
-    logger.debug(f"Obtained results: {method}, {str(r.status_code)}, {str(len(r.text))}, {r.reason}")
-    results[method] = {"status_code": r.status_code, "length": len(r.text), "reason": r.reason[:100]}
+    logger.debug(
+        f"Obtained results: {method}, {str(r.status_code)}, {str(len(r.text))}, {r.reason}"
+    )
+    results[method] = {
+        "status_code": r.status_code,
+        "length": len(r.text),
+        "reason": r.reason[:100],
+    }
 
 
-def print_results(console, results):
+def print_results(logger, console, results):
     logger.verbose("Parsing & printing results")
-    table = Table(show_header=True, header_style="bold blue", border_style="blue", box=box.SIMPLE)
+    table = Table(
+        show_header=True, header_style="bold blue", border_style="blue", box=box.SIMPLE
+    )
     table.add_column("Method")
     table.add_column("Length")
     table.add_column("Status code")
@@ -238,15 +291,27 @@ def print_results(console, results):
             style = "green"
         elif 300 <= result[1]["status_code"] <= 399:
             style = "cyan"
-        elif 400 <= result[1]["status_code"] <= 499:  # This means the method is disabled in most cases
+        elif (
+            400 <= result[1]["status_code"] <= 499
+        ):  # This means the method is disabled in most cases
             style = "red"
-        elif (500 <= result[1]["status_code"] <= 599) and result[1]["status_code"] != 502:  # This means the method is not implemented in most cases
+        elif (500 <= result[1]["status_code"] <= 599) and result[1][
+            "status_code"
+        ] != 502:  # This means the method is not implemented in most cases
             style = "orange3"
-        elif result[1]["status_code"] == 502:  # This probably means the method is accepted but request was malformed
+        elif (
+            result[1]["status_code"] == 502
+        ):  # This probably means the method is accepted but request was malformed
             style = "yellow4"
         else:
             style = None
-        table.add_row(result[0], str(result[1]["length"]), str(result[1]["status_code"]), result[1]["reason"], style=style)
+        table.add_row(
+            result[0],
+            str(result[1]["length"]),
+            str(result[1]["status_code"]),
+            result[1]["reason"],
+            style=style,
+        )
     console.print(table)
 
 
@@ -265,8 +330,8 @@ def enumerate_http_verbs(options, logger, console):
     if options.proxy:
         try:
             proxies = {
-                "http": "http://" + options.proxy.split('//')[1],
-                "https": "http://" + options.proxy.split('//')[1]
+                "http": "http://" + options.proxy.split("//")[1],
+                "https": "http://" + options.proxy.split("//")[1],
             }
             logger.debug(f"Setting proxies to {str(proxies)}")
         except (IndexError, ValueError):
@@ -286,13 +351,17 @@ def enumerate_http_verbs(options, logger, console):
         cookies = {}
 
     if options.headers:
-        headers = {h.split(':', 1)[0]: h.split(':', 1)[1].strip() for h in options.headers}
+        headers = {
+            h.split(":", 1)[0]: h.split(":", 1)[1].strip() for h in options.headers
+        }
     else:
         headers = {}
 
     if options.wordlist is not None:
-        methods += methods_from_wordlist(options.wordlist)
-    methods += methods_from_http_options(console, options, proxies, headers, cookies)
+        methods += methods_from_wordlist(logger, options.wordlist)
+    methods += methods_from_http_options(
+        logger, console, options, proxies, headers, cookies
+    )
 
     # Sort uniq
     methods = [m.upper() for m in methods]
@@ -304,7 +373,8 @@ def enumerate_http_verbs(options, logger, console):
         if method in ["DELETE", "COPY", "PUT", "PATCH", "UNCHECKOUT"]:
             if not options.safe:
                 test_dangerous_method = console.input(
-                    f"[bold orange3][?][/bold orange3] Do you really want to test method {method} (can be dangerous)? \[y/N] ")
+                    f"[bold orange3][?][/bold orange3] Do you really want to test method {method} (can be dangerous)? \[y/N] "
+                )
                 if not test_dangerous_method.lower() == "y":
                     logger.verbose(f"Method {method} will not be tested")
                 else:
@@ -318,38 +388,42 @@ def enumerate_http_verbs(options, logger, console):
     # Waits for all the threads to be completed
     with ThreadPoolExecutor(max_workers=min(options.threads, len(methods))) as tp:
         for method in methods:
-            tp.submit(test_method, options, method, proxies, cookies, headers, results)
+            tp.submit(
+                test_method, logger, options, method, proxies, cookies, headers, results
+            )
 
     # Sorting the results by method name
     results = {key: results[key] for key in sorted(results)}
 
     # Parsing and print results
-    print_results(console, results)
+    print_results(logger, console, results)
 
     # Export to JSON if specified
     if options.jsonfile is not None:
         json_export(results, options.jsonfile)
-
-if __name__ == '__main__':
-    main()
 
 
 def main():
     try:
         print(banner)
         options = get_options()
-        logger = Logger(options.verbosity, options.quiet)
         console = Console()
+        logger = Logger(console, options.verbosity, options.quiet)
         if not options.verify:
-            # Disable warnings of insecure connection for invalid cerificates
             requests.packages.urllib3.disable_warnings()
-            # Allow use of deprecated and weak cipher methods
-            requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += ':HIGH:!DH:!aNULL'
+            requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += ":HIGH:!DH:!aNULL"
             try:
-                requests.packages.urllib3.contrib.pyopenssl.util.ssl_.DEFAULT_CIPHERS += ':HIGH:!DH:!aNULL'
+                requests.packages.urllib3.contrib.pyopenssl.util.ssl_.DEFAULT_CIPHERS += (
+                    ":HIGH:!DH:!aNULL"
+                )
             except AttributeError:
                 pass
         enumerate_http_verbs(options, logger, console)
     except KeyboardInterrupt:
-        logger.info("Terminating script...")
+        console = Console()
+        console.print("[bold red][!][/bold red] Terminating script...")
         raise SystemExit
+
+
+if __name__ == "__main__":
+    main()
