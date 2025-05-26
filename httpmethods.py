@@ -256,7 +256,7 @@ def json_export(results, json_file):
     f.close()
 
 
-def main(options, logger, console):
+def enumerate_http_verbs(options, logger, console):
     logger.info("Starting HTTP verb enumerating and tampering")
     global methods
     results = {}
@@ -330,8 +330,11 @@ def main(options, logger, console):
     if options.jsonfile is not None:
         json_export(results, options.jsonfile)
 
-
 if __name__ == '__main__':
+    main()
+
+
+def main():
     try:
         print(banner)
         options = get_options()
@@ -346,7 +349,7 @@ if __name__ == '__main__':
                 requests.packages.urllib3.contrib.pyopenssl.util.ssl_.DEFAULT_CIPHERS += ':HIGH:!DH:!aNULL'
             except AttributeError:
                 pass
-        main(options, logger, console)
+        enumerate_http_verbs(options, logger, console)
     except KeyboardInterrupt:
         logger.info("Terminating script...")
         raise SystemExit
