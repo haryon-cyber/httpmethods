@@ -157,6 +157,24 @@ def get_options():
         required=False,
         help='Specify headers to use in requests. (e.g., --header "Header1: Value1" --header "Header2: Value2")'
     )
+    parser.add_argument(
+        "-y",
+        "--auto-accept",
+        dest="auto_accept",
+        action="store_true",
+        default=False,
+        required=False,
+        help="Auto accept user interactions",
+    )
+    parser.add_argument(
+        "-n",
+        "--auto-refuse",
+        dest="auto_refuse",
+        action="store_true",
+        default=False,
+        required=False,
+        help="Auto accept user interactions",
+    )
     options = parser.parse_args()
     return options
 
@@ -189,8 +207,13 @@ def methods_from_http_options(console, options, proxies, headers, cookies):
         logger.debug(r.headers)
         if "Allow" in r.headers:
             logger.info("URL answers with a list of options: {}".format(r.headers["Allow"]))
-            include_options_methods = console.input(
-                "[bold orange3][?][/bold orange3] Do you want to add these methods to the test (be careful, some methods can be dangerous)? [Y/n] ")
+            if options.auto_accept:
+                include_options_methods = "y"
+            elif options.auto_refuse:
+                include_options_methods = "n"
+            else:
+                include_options_methods = console.input(
+                    "[bold orange3][?][/bold orange3] Do you want to add these methods to the test (be careful, some methods can be dangerous)? [Y/n] ")
             if not include_options_methods.lower() == "n":
                 for method in r.headers["Allow"].replace(" ", "").split(","):
                     if method not in options_methods:
@@ -261,6 +284,12 @@ def main(options, logger, console):
     global methods
     results = {}
 
+    if options.auto_accept and options.auto_refuse:
+        logger.error(
+            "Either auto-accept and auto-refuse are set. Choose between one of them please."
+        )
+        return
+
     # Verifying the proxy option
     if options.proxy:
         try:
@@ -303,8 +332,13 @@ def main(options, logger, console):
     for method in methods:
         if method in ["DELETE", "COPY", "PUT", "PATCH", "UNCHECKOUT"]:
             if not options.safe:
-                test_dangerous_method = console.input(
-                    f"[bold orange3][?][/bold orange3] Do you really want to test method {method} (can be dangerous)? \[y/N] ")
+                if options.auto_accept:
+                    test_dangerous_method = "y"
+                elif options.auto_refuse:
+                    test_dangerous_method = "n"
+                else:
+                    test_dangerous_method = console.input(
+                        f"[bold orange3][?][/bold orange3] Do you really want to test method {method} (can be dangerous)? \[y/N] ")
                 if not test_dangerous_method.lower() == "y":
                     logger.verbose(f"Method {method} will not be tested")
                 else:
